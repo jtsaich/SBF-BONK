@@ -180,8 +180,6 @@
   background-position: -160px -160px;
 }
 .bonkButton {
-  position: absolute;
-  left: calc(50% - 200px / 2);
   background: #ffffff;
   box-shadow: 0px 6px 0px #169bb4;
   border-radius: 38.5px;

@@ -5,6 +5,7 @@ import Cz from "../public/cz.png";
 import Sbf from "../public/sbf.png";
 import Nav from "../components/Nav";
 import { useRef, useEffect, useState } from "react";
+import useBalanceOf from "../hooks/useBalanceOf";
 import useNFTMint from "../hooks/useNFTMint";
 import {
   Container,
@@ -29,6 +30,7 @@ import ComDecen from "../components/ComDecen";
 import useMouseEvent from "../hooks/useMouseEvent";
 import useSWR from "swr";
 import React from "react";
+import useNFTTransfer from "../hooks/useNFTTransfer";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -54,11 +56,15 @@ const Home: NextPage = () => {
   // const data = useSWR("/api/cookies", fetcher);
   // console.log(data)
 
+  const { balanceOf, refetchBalanceOf } = useBalanceOf();
+
   // Mint
   const { freeMintAsync, isConnected } = useNFTMint();
+  const { transferAsync, transferFrom } = useNFTTransfer();
   const [status, setStatus] = useState("done!");
   const [link, setLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingGift, setIsLoadingGift] = useState(false);
   const toast = useToast();
   const [bonkText, setBonkText] = useState("Bonk");
 
@@ -94,6 +100,39 @@ const Home: NextPage = () => {
           setStatus("Error, please try again.");
           setIsLoading(false);
         }
+      }
+    }
+  };
+
+  const handleClickGift = async () => {
+    if (isConnected == false) {
+      window.alert("請先連結錢包");
+    } else {
+      // 有連結錢包後才能執行 mint
+      const to = window.prompt("Gifting to address", "0x0");
+      if (!to) {
+        return;
+      }
+
+      try {
+        setIsLoadingGift(true);
+        let transferTx = await transferAsync?.({
+          recklesslySetUnpreparedArgs: [transferFrom, to, 0, 1, "0x00"],
+        });
+        await transferTx?.wait();
+        refetchBalanceOf();
+        setLink(`https://etherscan.io/tx/${transferTx?.hash}`);
+        setIsLoadingGift(false);
+        toast({
+          title: "Gifted!",
+          position: "bottom-right",
+          status: "success",
+          duration: 6000,
+          isClosable: true,
+        });
+      } catch (error) {
+        setStatus("Error, please try again.");
+        setIsLoading(false);
       }
     }
   };
@@ -157,29 +196,51 @@ const Home: NextPage = () => {
           <Box className={styles["batWrapper"]} ref={batRef} />
           {/* BONK BUTTON */}
           {isMobile || (
-            <Button
-              w="200px"
-              height="50px"
+            <Box
               position="absolute"
-              fontSize="30px"
-              color="#07839E"
-              borderRadius="38.5px"
-              onMouseDown={mouseDown}
-              onMouseUp={mouseUp}
-              className={styles["bonkButton"]}
-              ref={bonkRef}
+              display="flex"
+              flexDir="column"
+              gap="16px"
               zIndex="10"
-              onClick={handleClick}
-              isLoading={isLoading}
               top={
                 isH
-                  ? "calc(100vh - (100vh - 1094px) - 137px)"
-                  : "calc(100vh - (100vh - 1094px) - 5px - 155px) "
+                  ? "calc(100vh - (100vh - 994px) - 137px)"
+                  : "calc(100vh - (100vh - 994px) - 5px - 155px) "
               }
-              _hover={{ color: "#ffffff", backgroundColor: "#07839E" }}
+              left={"calc(50% - 200px / 2)"}
             >
-              {bonkText}
-            </Button>
+              <Button
+                w="200px"
+                height="50px"
+                fontSize="30px"
+                color="#07839E"
+                borderRadius="38.5px"
+                onMouseDown={mouseDown}
+                onMouseUp={mouseUp}
+                className={styles["bonkButton"]}
+                ref={bonkRef}
+                onClick={handleClick}
+                isLoading={isLoading}
+                _hover={{ color: "#ffffff", backgroundColor: "#07839E" }}
+                isDisabled={balanceOf?.gt(1)}
+              >
+                {bonkText}
+              </Button>
+              <Button
+                w="200px"
+                height="50px"
+                fontSize="30px"
+                color="#07839E"
+                borderRadius="38.5px"
+                className={styles["bonkButton"]}
+                onClick={handleClickGift}
+                isLoading={isLoadingGift}
+                _hover={{ color: "#ffffff", backgroundColor: "#07839E" }}
+                isDisabled={balanceOf?.lte(0)}
+              >
+                Gift
+              </Button>
+            </Box>
           )}
           {/* Transaction Status */}
           <TrxStatus
@@ -190,7 +251,12 @@ const Home: NextPage = () => {
           />
           {/* Transaction Link */}
           <TrxLink link={link} isHeigher={isH} />
-          <MobileInstru count={count} isHeigher={isH} isMobile={isMobile} />
+          <MobileInstru
+            balanceOf={balanceOf?.toString() || "0"}
+            count={count}
+            isHeigher={isH}
+            isMobile={isMobile}
+          />
         </Box>
         <Members isHeigher={isH} isMobile={isMobile} />
       </Container>

@@ -1,18 +1,31 @@
 import { Text, Stack, Box } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
 import { FaVolumeUp } from "react-icons/fa";
 interface Props {
+  balanceOf: string;
   count: number;
   isHeigher: boolean;
   isMobile: boolean;
 }
-const MobileInstru: React.FC<Props> = ({ count, isHeigher, isMobile }) => {
+const MobileInstru: React.FC<Props> = ({
+  balanceOf,
+  count,
+  isHeigher,
+  isMobile,
+}) => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  if (!isClient) {
+    return;
+  }
   return (
     <>
       {!isMobile ? (
         count < 111 && (
-          <Text
+          <Box
             position="absolute"
-            fontSize="30px"
             top={
               isHeigher
                 ? "calc(100vh - (100vh - 1094px) - 74px)"
@@ -20,10 +33,15 @@ const MobileInstru: React.FC<Props> = ({ count, isHeigher, isMobile }) => {
             }
             left="50%"
             transform="translateX(-50%)"
-            color="#ffffff"
+            textAlign="center"
           >
-            {count} / 111
-          </Text>
+            <Text fontSize="30px" color="#ffffff">
+              You own: {balanceOf}
+            </Text>
+            <Text fontSize="30px" color="#ffffff">
+              {count} / 111
+            </Text>
+          </Box>
         )
       ) : (
         <Stack

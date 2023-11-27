@@ -20,8 +20,8 @@ const TrxLink: React.FC<Props> = ({ link, isHeigher }) => {
           textDecoration="underline"
           top={
             isHeigher
-              ? "calc(100vh - (100vh - 1094px) - 74px)"
-              : "calc(100vh -  (100vh - 1094px) + 15px - 74px)"
+              ? "calc(100vh - (100vh - 1024px) - 74px)"
+              : "calc(100vh -  (100vh - 1024px) + 15px - 74px)"
           }
         >
           <Link href={link} target="_blank">
